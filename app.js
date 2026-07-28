@@ -596,8 +596,8 @@
         pageItems.forEach((item, index) => {
             const tr = document.createElement('tr');
 
-            // Calculate Percentage (Assuming max 310)
-            const percentage = ((item.total_degree / 310) * 100).toFixed(1);
+            // Calculate Percentage (Assuming max 320)
+            const percentage = ((item.total_degree / 320) * 100).toFixed(1);
 
             // Badge Class
             let badgeClass = 'passed';
@@ -649,9 +649,9 @@
     function openStudentModal(student) {
         elements.modalStudentName.textContent = student.arabic_name;
         elements.modalSeatingNo.textContent = student.seating_no;
-        elements.modalTotalDegree.textContent = `${student.total_degree} / 310`;
+        elements.modalTotalDegree.textContent = `${student.total_degree} / 320`;
 
-        const pct = ((student.total_degree / 310) * 100).toFixed(2);
+        const pct = ((student.total_degree / 320) * 100).toFixed(2);
         elements.modalPercentage.textContent = `${pct}%`;
 
         let badgeClass = 'passed';
