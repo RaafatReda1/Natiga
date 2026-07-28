@@ -56,6 +56,9 @@
         filterCase: document.getElementById('filter-case'),
         filterMinDegree: document.getElementById('filter-min-degree'),
         filterMaxDegree: document.getElementById('filter-max-degree'),
+        filterSortCol: document.getElementById('filter-sort-col'),
+        toggleSortDirBtn: document.getElementById('toggle-sort-dir-btn'),
+        sortDirIcon: document.getElementById('sort-dir-icon'),
         resetFiltersBtn: document.getElementById('reset-filters-btn'),
         presetButtons: document.querySelectorAll('.preset-btn'),
 
@@ -165,6 +168,23 @@
             state.currentPage = 1;
             applyFiltersAndRender();
         });
+
+        // Mobile & Desktop Sort Controls
+        if (elements.filterSortCol) {
+            elements.filterSortCol.addEventListener('change', (e) => {
+                state.sortColumn = e.target.value;
+                updateSortHeaderIcons();
+                applyFiltersAndRender();
+            });
+        }
+
+        if (elements.toggleSortDirBtn) {
+            elements.toggleSortDirBtn.addEventListener('click', () => {
+                state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
+                updateSortHeaderIcons();
+                applyFiltersAndRender();
+            });
+        }
 
         // Reset Filters Button
         elements.resetFiltersBtn.addEventListener('click', resetAllFilters);
@@ -559,7 +579,7 @@
         renderTablePage();
     }
 
-    // Update Th Icon Headers
+    // Update Th Icon Headers & Sort Controls
     function updateSortHeaderIcons() {
         elements.tableHeaders.forEach((th) => {
             th.classList.remove('sorted-asc', 'sorted-desc');
@@ -567,6 +587,18 @@
                 th.classList.add(state.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
             }
         });
+
+        if (elements.filterSortCol) {
+            elements.filterSortCol.value = state.sortColumn;
+        }
+
+        if (elements.sortDirIcon) {
+            if (state.sortDirection === 'asc') {
+                elements.sortDirIcon.className = 'fa-solid fa-arrow-up-1-9';
+            } else {
+                elements.sortDirIcon.className = 'fa-solid fa-arrow-down-9-1';
+            }
+        }
     }
 
     // Render Table Page Chunk

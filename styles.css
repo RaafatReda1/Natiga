@@ -580,6 +580,22 @@ body {
     color: var(--color-red);
 }
 
+/* Sort Input Pair */
+.sort-input-pair {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-input-pair select {
+    flex: 1;
+}
+
+.sort-input-pair .btn {
+    padding: 10px 14px;
+    flex-shrink: 0;
+}
+
 /* Toolbar & Summary */
 .toolbar-bar {
     display: flex;

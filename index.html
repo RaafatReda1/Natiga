@@ -167,6 +167,22 @@
                     </select>
                 </div>
 
+                <!-- Sort Control Group -->
+                <div class="form-group sort-group">
+                    <label for="filter-sort-col"><i class="fa-solid fa-arrow-down-short-wide"></i> ترتيب حسب:</label>
+                    <div class="sort-input-pair">
+                        <select id="filter-sort-col">
+                            <option value="seating_no" selected>رقم الجلوس</option>
+                            <option value="arabic_name">اسم الطالب</option>
+                            <option value="total_degree">المجموع الكلي</option>
+                            <option value="student_case_desc">حالة الطالب</option>
+                        </select>
+                        <button id="toggle-sort-dir-btn" class="btn btn-secondary" title="تبديل الاتجاه (تصاعدي/تنازلي)">
+                            <i id="sort-dir-icon" class="fa-solid fa-arrow-down-1-9"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Min Degree Filter -->
                 <div class="form-group">
                     <label for="filter-min-degree"><i class="fa-solid fa-arrow-up-1-9"></i> الدرجة الأدنى:</label>
