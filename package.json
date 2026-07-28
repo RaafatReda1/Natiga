@@ -1,0 +1,22 @@
+{
+  "name": "natiga",
+  "version": "1.0.0",
+  "description": "Student Results Explorer & Analytics - منظومة نتائج الطلاب",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": [
+    "student",
+    "results",
+    "analytics",
+    "education"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
