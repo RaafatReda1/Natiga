@@ -273,15 +273,18 @@
         }
     }
 
-    // Load Initial JSON File (output.json)
+    // Load Initial JSON File (output.json.gz)
     async function loadInitialData() {
         try {
-            updateLoaderProgress(10, 'تنزيل ملف البيانات output.json...');
-            const response = await fetch('output.json');
-            if (!response.ok) throw new Error('تعذر العثور على ملف output.json');
+            updateLoaderProgress(15, 'تنزيل ملف البيانات المضغوط...');
+            const response = await fetch('output.json.gz');
+            if (!response.ok) throw new Error('تعذر تحميل ملف output.json.gz');
 
-            updateLoaderProgress(50, 'معالجة الهيكل البرمجي للسجلات...');
-            const data = await response.json();
+            updateLoaderProgress(45, 'فك الضغط عن البيانات في الذاكرة...');
+            const ds = new DecompressionStream('gzip');
+            const decompressedStream = response.body.pipeThrough(ds);
+            const decompressedResponse = new Response(decompressedStream);
+            const data = await decompressedResponse.json();
 
             updateLoaderProgress(85, 'بناء محرك البحث وتجهيز الإحصائيات...');
             processRawData(data);
@@ -291,52 +294,56 @@
                 elements.loaderBanner.classList.add('hidden');
                 elements.dataStatusBadge.className = 'status-pill success';
                 elements.dataStatusText.textContent = `جاهز (${formatNum(state.allData.length)} طالب)`;
-            }, 400);
+            }, 300);
 
         } catch (err) {
             console.error(err);
-            elements.loaderDetails.textContent = `تنبيه: ${err.message}. يرجى اختيار ملف JSON يدويًا باستخدام الأزرار بالأعلى.`;
+            elements.loaderDetails.textContent = `تنبيه: ${err.message}. يرجى اختيار ملف .gz يدويًا.`;
             elements.progressBarFill.style.backgroundColor = '#ef4444';
             elements.dataStatusBadge.className = 'status-pill loading';
             elements.dataStatusText.textContent = 'بانتظار تحميل الملف...';
         }
     }
 
-    // Handle Custom File Picker
-    function handleCustomFileLoad(e) {
+    // Handle Custom File Picker (.gz or .json)
+    async function handleCustomFileLoad(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         elements.loaderBanner.classList.remove('hidden');
         updateLoaderProgress(20, `قراءة الملف: ${file.name}...`);
 
-        const reader = new FileReader();
-        reader.onprogress = (evt) => {
-            if (evt.lengthComputable) {
-                const percent = Math.round((evt.loaded / evt.total) * 60) + 20;
-                updateLoaderProgress(percent, 'جاري قراءة البيانات من القرص...');
+        try {
+            let data;
+            if (file.name.endsWith('.gz')) {
+                updateLoaderProgress(50, 'فك ضغط الملف في الذاكرة...');
+                const arrayBuffer = await file.arrayBuffer();
+                const ds = new DecompressionStream('gzip');
+                const writer = ds.writable.getWriter();
+                writer.write(arrayBuffer);
+                writer.close();
+                const decompressedResponse = new Response(ds.readable);
+                data = await decompressedResponse.json();
+            } else {
+                updateLoaderProgress(50, 'قراءة ملف JSON...');
+                const text = await file.text();
+                data = JSON.parse(text);
             }
-        };
 
-        reader.onload = (evt) => {
-            try {
-                updateLoaderProgress(85, 'تحليل كائن JSON في الذاكرة...');
-                const parsed = JSON.parse(evt.target.result);
-                processRawData(parsed);
+            updateLoaderProgress(85, 'بناء محرك البحث...');
+            processRawData(data);
 
-                updateLoaderProgress(100, 'تم التحميل بنجاح!');
-                setTimeout(() => {
-                    elements.loaderBanner.classList.add('hidden');
-                    elements.dataStatusBadge.className = 'status-pill success';
-                    elements.dataStatusText.textContent = `جاهز (${formatNum(state.allData.length)} طالب)`;
-                }, 300);
-            } catch (jsonErr) {
-                alert('عفوًا! خطأ في تنسيق ملف JSON المرفق.');
+            updateLoaderProgress(100, 'تم التحميل بنجاح!');
+            setTimeout(() => {
                 elements.loaderBanner.classList.add('hidden');
-            }
-        };
-
-        reader.readAsText(file);
+                elements.dataStatusBadge.className = 'status-pill success';
+                elements.dataStatusText.textContent = `جاهز (${formatNum(state.allData.length)} طالب)`;
+            }, 300);
+        } catch (err) {
+            console.error(err);
+            alert('عفوًا! حدث خطأ أثناء قراءة الملف.');
+            elements.loaderBanner.classList.add('hidden');
+        }
     }
 
     function updateLoaderProgress(pct, msg) {
@@ -346,20 +353,46 @@
 
     // Process & Compute Stats for Entire Dataset
     function processRawData(data) {
-        if (!Array.isArray(data)) {
-            console.error('Data is not array');
+        let rawRecords = [];
+        let casesList = [];
+
+        if (Array.isArray(data)) {
+            rawRecords = data;
+        } else if (data && typeof data === 'object' && Array.isArray(data.records)) {
+            rawRecords = data.records;
+            casesList = data.cases || [];
+        } else {
+            console.error('Unrecognized data structure');
             return;
         }
 
         // Attach pre-calculated normalized name for instant Arabic search
-        state.allData = data.map((item, idx) => ({
-            id: idx + 1,
-            seating_no: item.seating_no || 0,
-            arabic_name: item.arabic_name || '',
-            arabic_name_norm: normalizeArabic(item.arabic_name || ''),
-            total_degree: item.total_degree !== null && item.total_degree !== undefined ? parseFloat(item.total_degree) : 0,
-            student_case_desc: (item.student_case_desc || 'غير محدد').trim()
-        }));
+        state.allData = rawRecords.map((item, idx) => {
+            const isArr = Array.isArray(item);
+            const seating_no = isArr ? item[0] : (item.seating_no || 0);
+            const arabic_name = isArr ? item[1] : (item.arabic_name || '');
+            const total_degree = isArr ? (item[2] ?? 0) : (item.total_degree ?? 0);
+            
+            let student_case_desc = 'غير محدد';
+            if (isArr) {
+                if (typeof item[3] === 'number' && casesList[item[3]] !== undefined) {
+                    student_case_desc = casesList[item[3]];
+                } else if (typeof item[3] === 'string') {
+                    student_case_desc = item[3];
+                }
+            } else if (item.student_case_desc) {
+                student_case_desc = item.student_case_desc;
+            }
+
+            return {
+                id: idx + 1,
+                seating_no: seating_no,
+                arabic_name: arabic_name,
+                arabic_name_norm: normalizeArabic(arabic_name),
+                total_degree: parseFloat(total_degree),
+                student_case_desc: String(student_case_desc).trim()
+            };
+        });
 
         // Extract Unique Cases for Filter Dropdown
         const caseSet = new Set();
