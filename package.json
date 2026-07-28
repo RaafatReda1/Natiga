@@ -1,0 +1,27 @@
+{
+  "name": "natiga",
+  "version": "1.0.0",
+  "description": "Student Results Explorer & Analytics - منظومة نتائج وتكشيف الطلاب",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RaafatReda1/Natiga.git"
+  },
+  "keywords": [
+    "student-results",
+    "analytics",
+    "vercel"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RaafatReda1/Natiga/issues"
+  },
+  "homepage": "https://github.com/RaafatReda1/Natiga#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
