@@ -175,6 +175,7 @@
                             <option value="seating_no" selected>رقم الجلوس</option>
                             <option value="arabic_name">اسم الطالب</option>
                             <option value="total_degree">المجموع الكلي</option>
+                            <option value="national_rank">الترتيب علي الجمهورية</option>
                             <option value="student_case_desc">حالة الطالب</option>
                         </select>
                         <button id="toggle-sort-dir-btn" class="btn btn-secondary" title="تبديل الاتجاه (تصاعدي/تنازلي)">
@@ -232,6 +233,17 @@
                             <th>النسبة %</th>
                             <th class="sortable" data-sort="student_case_desc">
                                 الحالة <i class="fa-solid fa-sort sort-icon"></i>
+                            </th>
+                            <th class="sortable rank-header" data-sort="national_rank">
+                                <span class="rank-header-text">
+                                    <i class="fa-solid fa-ranking-star"></i>
+                                    الترتيب علي الجمهورية
+                                </span>
+                                <i class="fa-solid fa-sort sort-icon"></i>
+                                <span class="rank-header-disclaimer" title="الترتيب غير رسمي ومجرد مقياس بسيط — يشمل جميع الشعب الموجودة في البيانات">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                    غير رسمي
+                                </span>
                             </th>
                             <th style="width: 100px; text-align: center;">معاينة</th>
                         </tr>
@@ -322,6 +334,28 @@
                             <span class="field-lbl">حالة الطالب:</span>
                             <span id="modal-student-case" class="status-badge">-</span>
                         </div>
+
+                        <!-- National Rank Field -->
+                        <div class="cert-field cert-field-rank">
+                            <span class="field-lbl rank-field-lbl">
+                                <i class="fa-solid fa-ranking-star"></i>
+                                الترتيب علي الجمهورية:
+                            </span>
+                            <strong id="modal-national-rank" class="field-val rank-val">-</strong>
+                            <span class="rank-out-of">من <span id="modal-national-rank-total">-</span> طالب</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rank Disclaimer Banner -->
+                <div class="rank-disclaimer-banner">
+                    <div class="disclaimer-icon-wrap">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="disclaimer-text">
+                        <strong>تنبيه هام:</strong>
+                        الترتيب علي الجمهورية الموضح هنا <strong>غير رسمي</strong> ومجرد مقياس بسيط.
+                        يشمل جميع الشعب الموجودة في البيانات وقد لا يعكس الترتيب الرسمي الصادر من وزارة التربية والتعليم.
                     </div>
                 </div>
 

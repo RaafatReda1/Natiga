@@ -90,7 +90,9 @@
         modalSeatingNo: document.getElementById('modal-seating-no'),
         modalTotalDegree: document.getElementById('modal-total-degree'),
         modalPercentage: document.getElementById('modal-percentage'),
-        modalStudentCase: document.getElementById('modal-student-case')
+        modalStudentCase: document.getElementById('modal-student-case'),
+        modalNationalRank: document.getElementById('modal-national-rank'),
+        modalNationalRankTotal: document.getElementById('modal-national-rank-total')
     };
 
     // Arabic Normalization Helper
@@ -410,8 +412,24 @@
                 arabic_name: arabic_name,
                 arabic_name_norm: normalizeArabic(arabic_name),
                 total_degree: parseFloat(total_degree),
-                student_case_desc: String(student_case_desc).trim()
+                student_case_desc: String(student_case_desc).trim(),
+                national_rank: 0  // Will be filled after full sort
             };
+        });
+
+        // --- Compute National Rank (informal, across all branches) ---
+        // Sort a copy by total_degree descending, assign ranks with ties
+        const sortedForRank = state.allData.slice().sort((a, b) => b.total_degree - a.total_degree);
+        let rankCounter = 0;
+        let prevDegree = null;
+        let prevRank = 0;
+        sortedForRank.forEach((item) => {
+            rankCounter++;
+            if (item.total_degree !== prevDegree) {
+                prevRank = rankCounter;
+                prevDegree = item.total_degree;
+            }
+            item.national_rank = prevRank;
         });
 
         // Extract Unique Cases for Filter Dropdown
@@ -568,6 +586,11 @@
             return (valA - valB) * dir;
         });
 
+        // If sorting by national_rank, ascending = best rank first (lowest number)
+        if (col === 'national_rank' && dir === -1) {
+            result.sort((a, b) => b.national_rank - a.national_rank);
+        }
+
         // Top 100 Preset Restriction
         if (state.preset === 'top100') {
             result = result.slice(0, 100);
@@ -625,6 +648,8 @@
 
         const fragment = document.createDocumentFragment();
 
+        const RANK_DISCLAIMER = 'الترتيب علي الجمهورية غير رسمي ومجرد مقياس بسيط — يشمل جميع الشعب الموجودة في البيانات';
+
         pageItems.forEach((item, index) => {
             const tr = document.createElement('tr');
 
@@ -640,6 +665,13 @@
             const highlightedName = highlightMatch(item.arabic_name, state.searchQuery);
             const highlightedSeating = highlightMatch(String(item.seating_no), state.searchQuery);
 
+            // National rank medal for top 3
+            const rankNum = item.national_rank;
+            let rankMedal = '';
+            if (rankNum === 1) rankMedal = '🥇 ';
+            else if (rankNum === 2) rankMedal = '🥈 ';
+            else if (rankNum === 3) rankMedal = '🥉 ';
+
             tr.innerHTML = `
                 <td>${startIndex + index + 1}</td>
                 <td><strong>${highlightedSeating}</strong></td>
@@ -647,6 +679,12 @@
                 <td style="font-weight: 700; color: var(--color-blue);">${item.total_degree}</td>
                 <td><span style="font-size: 0.85rem; color: var(--text-secondary);">${percentage}%</span></td>
                 <td><span class="status-badge ${badgeClass}">${item.student_case_desc}</span></td>
+                <td class="national-rank-cell">
+                    <div class="national-rank-wrapper" title="${RANK_DISCLAIMER}">
+                        <span class="national-rank-badge rank-num-${rankNum <= 3 ? rankNum : 'normal'}">${rankMedal}${formatNum(rankNum)}</span>
+                        <span class="rank-disclaimer-icon" title="${RANK_DISCLAIMER}"><i class="fa-solid fa-circle-info"></i></span>
+                    </div>
+                </td>
                 <td style="text-align: center;">
                     <button class="btn btn-sm btn-outline view-btn" data-id="${item.id}" title="عرض نتيجة الطالب">
                         <i class="fa-solid fa-eye"></i>
@@ -693,6 +731,19 @@
         elements.modalStudentCase.className = `status-badge ${badgeClass}`;
         elements.modalStudentCase.textContent = student.student_case_desc;
 
+        // National Rank
+        if (elements.modalNationalRank) {
+            const rankNum = student.national_rank;
+            let medal = '';
+            if (rankNum === 1) medal = '🥇 ';
+            else if (rankNum === 2) medal = '🥈 ';
+            else if (rankNum === 3) medal = '🥉 ';
+            elements.modalNationalRank.textContent = `${medal}${formatNum(rankNum)}`;
+        }
+        if (elements.modalNationalRankTotal) {
+            elements.modalNationalRankTotal.textContent = formatNum(state.allData.length);
+        }
+
         elements.studentModal.classList.remove('hidden');
     }
 
@@ -707,12 +758,13 @@
             return;
         }
 
-        const headers = ['رقم الجلوس', 'اسم الطالب', 'المجموع الكلي', 'حالة الطالب'];
+        const headers = ['رقم الجلوس', 'اسم الطالب', 'المجموع الكلي', 'حالة الطالب', 'الترتيب علي الجمهورية (غير رسمي)'];
         const rows = state.filteredData.map(item => [
             item.seating_no,
             `"${item.arabic_name.replace(/"/g, '""')}"`,
             item.total_degree,
-            `"${item.student_case_desc}"`
+            `"${item.student_case_desc}"`,
+            item.national_rank
         ]);
 
         const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -736,7 +788,8 @@
             seating_no: item.seating_no,
             arabic_name: item.arabic_name,
             total_degree: item.total_degree,
-            student_case_desc: item.student_case_desc
+            student_case_desc: item.student_case_desc,
+            national_rank_unofficial: item.national_rank
         }));
 
         const jsonStr = JSON.stringify(exportData, null, 4);
